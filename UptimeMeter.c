@@ -41,7 +41,7 @@ static void UptimeMeter_updateValues(Meter* this, char* buffer, int len) {
    } else {
       daysbuf[0] = '\0';
    }
-   xSnprintf(buffer, len, "%s%02d:%02d:%02d", daysbuf, hours, minutes, seconds);
+   xSnprintf(buffer, len, "%s%02d:%02d:%02d %d", daysbuf, hours, minutes, seconds, PerfCounter_openFds);
 }
 
 MeterClass UptimeMeter_class = {
