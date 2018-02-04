@@ -193,8 +193,7 @@ static void Battery_getSysData(double* level, ACPresence* isOnAC) {
          break;
       char* entryName = (char *) dirEntry->d_name;
       const char filePath[50];
-
-      if (entryName[0] == 'B' && entryName[1] == 'A' && entryName[2] == 'T') {
+      if (entryName[0] == 'b' && entryName[1] == 'a' && entryName[2] == 't') {
          
          xSnprintf((char *) filePath, sizeof filePath, SYS_POWERSUPPLY_DIR "/%s/uevent", entryName);
          int fd = open(filePath, O_RDONLY);
@@ -212,11 +211,20 @@ static void Battery_getSysData(double* level, ACPresence* isOnAC) {
          buffer[buflen] = '\0';
          char *buf = buffer;
          char *line = NULL;
-         bool full = false;
-         bool now = false;
+         //bool full = false;
+         //bool now = false;
          while ((line = strsep(&buf, "\n")) != NULL) {
    #define match(str,prefix) \
            (String_startsWith(str,prefix) ? (str) + strlen(prefix) : NULL)
+            const char* ps = match(line, "POWER_SUPPLY_CAPACITY=");
+		if (!ps) {
+			continue;
+		}
+		else {
+			totalFull += atoi(ps);
+			break;
+		}
+/**
             const char* ps = match(line, "POWER_SUPPLY_");
             if (!ps) {
                continue;
@@ -228,13 +236,15 @@ static void Battery_getSysData(double* level, ACPresence* isOnAC) {
             if (!energy) {
                continue;
             }
-            const char* value = (!full) ? match(energy, "FULL=") : NULL;
+
+            const char* value = (!full) ? match(ps, "CAPACITY=") : NULL;
             if (value) {
                totalFull += atoi(value);
                full = true;
-               if (now) break;
+               //if (now) break;
+		break;
                continue;
-            }
+            } 
             value = (!now) ? match(energy, "NOW=") : NULL;
             if (value) {
                totalRemain += atoi(value);
@@ -242,9 +252,10 @@ static void Battery_getSysData(double* level, ACPresence* isOnAC) {
                if (full) break;
                continue;
             }
+*/
          }
    #undef match
-      } else if (entryName[0] == 'A') {
+      } else if (entryName[0] == 'a') {
          if (*isOnAC != AC_ERROR) {
             continue;
          }
@@ -270,10 +281,11 @@ static void Battery_getSysData(double* level, ACPresence* isOnAC) {
       }
    }
    closedir(dir);
-   *level = totalFull > 0 ? ((double) totalRemain * 100) / (double) totalFull : 0;
+   //*level = totalFull > 0 ? ((double) totalRemain * 100) / (double) totalFull : 0;
+	*level = totalFull;
 }
 
-static enum { BAT_PROC, BAT_SYS, BAT_ERR } Battery_method = BAT_PROC;
+static enum { BAT_PROC, BAT_SYS, BAT_ERR } Battery_method = BAT_SYS;
 
 static time_t Battery_cacheTime = 0;
 static double Battery_cacheLevel = 0;
